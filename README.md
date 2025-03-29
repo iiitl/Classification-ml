@@ -1,28 +1,60 @@
-# Classification-FOSS-WEEKEND
+# Data Cleaning Process
 
-## Prerequisites
-To make the most out of these tutorials, you should have a basic understanding of programming concepts and have some experience with Python.
+## Overview
+This document outlines the steps taken to clean the dataset and prepare it for further analysis. The main focus was handling missing values, removing dupliates and choosing an appropriate imputation method.
 
-## What To Do
-Before getting started, please check the issues tab for tasks related to this repository. If you have any suggestions, ideas, or find any issues, feel free to open a new issue.
+## Steps Followed
 
-## Getting Started
-To get started with the tutorials, you have a couple of options:
+### Step 1: Checked Data Distribution
+- Analyzed whether data was normally distributed.
+- Found that the data was not normally distributed.
+- Decided against using mean imputation since it is sensitive to skewed distributions.
 
-### Option 1: Open Collaboratory
-Click [here](https://colab.research.google.com/) to open the notebooks directly in Google Colab. Follow along with the tutorials and execute the code cells in the Colab environment. For classification tasks, use 'type' as the target variable in the dataset.
+### Step 2: Identified Missing Values
+  ```python
+  print(df.isnull().sum())
+  ```
+- Identified that several numerical and categorical columns had missing values (e.g., `car`, `Bar`, `CoffeeHouse`, etc.).
 
-### Option 2: Jupyter Notebook
-1. Clone this repository to your local machine.
-2. Ensure you have Python installed. If not, download and install it from [python.org](https://www.python.org/).
-3. Launch Jupyter Notebook from the command line by running `jupyter notebook`.
-4. Use the in-vehicle-coupon-recommendation.csv dataset for classification tasks, with 'type' as the target variable in the dataset.
 
-## Contributing
-We welcome contributions from the community to make this repository better. To contribute, follow these steps:
-1. Fork this repository to your GitHub account.
-2. Create a new branch for your feature or bug fix: `git checkout -b feature-name`.
-3. Then stage your changes: `git add . `.
-4. Commit your changes with descriptive commit messages: `git commit -m 'feat : description'`.
-5. Push your changes to your fork: `git push origin feature-name`.
-6. Open a pull request on the original repository, describing your changes.
+### Step 3: Dropped the Duplicate Rows And Removed a Column
+  ```python
+  df.drop_duplicates()
+  ```
+-Found "car" column has more that 99% missing values and omitted it.
+  
+
+### Step 4: Converted Possible Categorical Columns to Numerical
+Before applying imputation, few categorical features were converted into numerical format:
+
+  ```python
+  df['gender'] = df['gender'].map({'Male': 1, 'Female': 0})
+  df["time"] = df["time"].str.replace("PM", "").str.replace("AM", "").astype(int) + \
+             df["time"].str.contains("PM").astype(int) * 12
+  ```
+
+
+### Step 5: Compared Median and KNN Imputation
+- Evaluated both median imputation and KNN imputation.
+- Found that both methods resulted in the same accuracy:
+  - **Median Imputation Accuracy**: 0.7482
+  - **KNN Imputation Accuracy**: 0.7482
+- Reason: Could be High redundancy in the data, leading to similar results for both methods.
+
+### Step 6: Chose Median Imputation for Missing Numerical Data
+- Since median imputation is computationally less expensive than KNN, it was chosen.
+- Used the following method:
+  ```python
+  from sklearn.impute import SimpleImputer
+  
+  num_cols = df.select_dtypes(include=["int64", "float64"]).columns
+  
+  imputer = SimpleImputer(strategy="median")
+  df[num_cols] = imputer.fit_transform(df[num_cols])
+  ```
+  
+
+## Checkout
+- [x]  I have read all the contributor guidelines for the repo.
+
+
