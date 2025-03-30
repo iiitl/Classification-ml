@@ -52,7 +52,11 @@ Before applying imputation, few categorical features were converted into numeric
   imputer = SimpleImputer(strategy="median")
   df[num_cols] = imputer.fit_transform(df[num_cols])
   ```
-  
+### Step 7: Filled the Missing Values of Categorical columns with Mode
+  ```python
+  for col in [ 'Bar', 'CoffeeHouse', 'CarryAway', 'RestaurantLessThan20', 'Restaurant20To50']:
+    df[col].fillna(df[col].mode()[0], inplace=True)
+  ```
 
 ## Checkout
 - [x]  I have read all the contributor guidelines for the repo.
