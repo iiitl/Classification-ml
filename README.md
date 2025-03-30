@@ -1,28 +1,105 @@
-# Classification-FOSS-WEEKEND
+Resolves [https://github.com/iiitl/Classification-ml/issues/2]
 
-## Prerequisites
-To make the most out of these tutorials, you should have a basic understanding of programming concepts and have some experience with Python.
+# 📌 Outlier Detection and Handling
 
-## What To Do
-Before getting started, please check the issues tab for tasks related to this repository. If you have any suggestions, ideas, or find any issues, feel free to open a new issue.
+This project focuses on detecting and handling outliers in a dataset using **Interquartile Range (IQR), transformations, and categorical grouping** to improve data quality for further analysis.
 
-## Getting Started
-To get started with the tutorials, you have a couple of options:
+## 🚀 Steps Followed
 
-### Option 1: Open Collaboratory
-Click [here](https://colab.research.google.com/) to open the notebooks directly in Google Colab. Follow along with the tutorials and execute the code cells in the Colab environment. For classification tasks, use 'type' as the target variable in the dataset.
+### 🔹 1. Checking Normality of Numerical Columns
+- To determine whether to use **Interquartile Range (IQR)** or **Z-scores** for outlier detection.
+- The data was skewed, so **IQR** was chosen instead of **Z-scores**.
 
-### Option 2: Jupyter Notebook
-1. Clone this repository to your local machine.
-2. Ensure you have Python installed. If not, download and install it from [python.org](https://www.python.org/).
-3. Launch Jupyter Notebook from the command line by running `jupyter notebook`.
-4. Use the in-vehicle-coupon-recommendation.csv dataset for classification tasks, with 'type' as the target variable in the dataset.
+```python
+import matplotlib.pyplot as plt
+import seaborn as sns
 
-## Contributing
-We welcome contributions from the community to make this repository better. To contribute, follow these steps:
-1. Fork this repository to your GitHub account.
-2. Create a new branch for your feature or bug fix: `git checkout -b feature-name`.
-3. Then stage your changes: `git add . `.
-4. Commit your changes with descriptive commit messages: `git commit -m 'feat : description'`.
-5. Push your changes to your fork: `git push origin feature-name`.
-6. Open a pull request on the original repository, describing your changes.
+for col in num_cols:
+    plt.figure(figsize=(6,4))
+    sns.histplot(df[col], kde=True, bins=30)
+    plt.title(f"Distribution of {col}")
+    plt.show()
+```
+
+---
+
+### 🔹 2. Outlier Detection Using IQR
+- IQR method was applied to numerical columns to count outliers.
+
+```python
+Q1 = df[num_cols].quantile(0.25)
+Q3 = df[num_cols].quantile(0.75)
+IQR = Q3 - Q1
+
+outliers = ((df[num_cols] < (Q1 - 1.5 * IQR)) | (df[num_cols] > (Q3 + 1.5 * IQR))).sum()
+print("Outlier count per column:") 
+print(outliers)
+```
+
+---
+
+### 🔹 3. Visualizing Outliers
+- **Boxplots & Scatter Plots** were used to analyze extreme outliers.
+
+```python
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+for col in num_cols:
+    plt.figure(figsize=(6, 4))
+    sns.boxplot(y=df[col])
+    plt.title(f"Boxplot for {col}")
+    plt.show()
+```
+
+---
+
+### 🔹 4. Handling Outliers
+✅ **No Changes for `toCoupon_GEQ25min`**
+- - **Binary Columns (0/1)** were ignored since they cannot have true outliers.
+
+✅ **`direction_opp` & `direction_same`**
+- Tried **Yeo-Johnson Transformation** & **Capping**, but skewness persisted.
+- The data might have a meaningful skew, and forcing normalization may remove useful information, so left them as it is.
+
+```python
+from scipy.stats import yeojohnson
+
+df["direction_same_transformed"], _ = yeojohnson(df["direction_same"])
+df["direction_opp_transformed"], _ = yeojohnson(df["direction_opp"])
+```
+
+```python
+import numpy as np
+
+lower_bound = Q1 - 1.5 * IQR
+upper_bound = Q3 + 1.5 * IQR
+df["direction_opp_capped"] = np.clip(df["direction_opp"], lower_bound, upper_bound)
+from scipy.stats import skew
+
+skew_direction_same = skew(df["direction_same_capped"])
+skew_direction_opp = skew(df["direction_opp_capped"])
+
+```
+
+---
+
+### 🔹 5. Handling Categorical Data – Detecting Rare Categories
+- Categorical columns do not have traditional outliers, but **rare categories** can cause issues.
+- Group low-frequency categories into **"Other"**.
+
+```python
+threshold = 100  
+rare_occupations = df["occupation"].value_counts()[df["occupation"].value_counts() < threshold].index
+df["occupation"] = df["occupation"].replace(rare_occupations, "Other")
+```
+
+---
+
+## ✨ Conclusion
+- Systematically analysed the dataset to remove the outliers ensuring data quality for futher processing. 
+
+---
+
+## Checkout
+- [x] I have read all the contributor guidelines of the repo.
